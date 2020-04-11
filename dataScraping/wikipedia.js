@@ -297,6 +297,91 @@ const getNationalParkMetaData = async () => {
 
 }
 
+const setMetaDataImage = async (id, url, width, height) => {
+  console.log(id, url, width, height);
+  await session.run(
+    `
+    MATCH (image:Image)
+    WHERE ID(image) = $id
+    SET image.url = $url, image.width = $width, image.height = $height
+    return image
+    `, {
+      id,
+      url,
+      width,
+      height
+    }
+  );
+}
+
+const getMetaDataImages = async () => {
+  const images = await session.run(
+    `
+      MATCH (image:Image)
+      WHERE NOT EXISTS(image.url)
+      RETURN image.url, image.fileReference, ID(image)
+      ORDER BY image.name
+    `
+  );
+  await asyncForEach(images.records, async (record, index) => {
+    const imageFileReference = encodeURI(record.get('image.fileReference'));
+    const imageId = record.get('ID(image)');
+    console.log(imageFileReference);
+    const wikiFetchLink = `https://en.wikipedia.org/w/api.php?action=query&titles=${imageFileReference}&prop=imageinfo&iiprop=url|dimensions&format=json&iiurlwidth=700`;
+    try {
+      const response = await fetch(wikiFetchLink);
+      const data = await response.json();
+      await sleep(1000);
+
+      const {
+        query: {
+          pages
+        }
+      } = data;
+
+      const {
+        thumburl: url,
+        thumbwidth: width,
+        thumbheight: height
+      } = pages[Object.keys(pages)[0]].imageinfo[0];
+      setMetaDataImage(imageId, url, width, height);
+    }
+    catch(e) {
+      console.log(e);
+    }
+  });
+}
+
+const cleanUpImageName = async () => {
+  const images = await session.run(
+    `
+      MATCH (image:Image)
+      return image.name, ID(image)
+    `
+  );
+  await asyncForEach(images.records, async (record, index) => {
+    const imageName = record.get('image.name');
+    const imageId = record.get('ID(image)');
+    console.log(imageId);
+    const newImageName = decodeURI(imageName.replace('File:', '').replace(/\..+/g, ''));
+    if (newImageName) {
+      await session.run(
+        `
+          MATCH (image:Image)
+          WHERE ID(image) = $imageId
+          SET image.name = $newImageName
+          RETURN image
+        `,
+        {
+          imageId,
+          newImageName
+        }
+      );
+    }
+
+  });
+}
+
 (async () => {
   // await createContinents(
   //   getCountryMetaData
@@ -305,6 +390,7 @@ const getNationalParkMetaData = async () => {
   // await getCountryWithoutRelationshipsList();
 
   // await getNationalParkMetaData();
-
+  // await getMetaDataImages();
+  await cleanUpImageName();
   driver.close()
 })();
