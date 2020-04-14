@@ -1,12 +1,11 @@
-const fetch = require('node-fetch');
-var html2json = require('html2json').html2json;
-const neo4j = require('neo4j-driver')
-const driver = neo4j.driver('bolt://localhost:7687', neo4j.auth.basic('lennert', 'neo4j'));
-const session = driver.session();
-const fs = require('fs');
-var cheerio = require('cheerio'),
-    cheerioTableparser = require('cheerio-tableparser');
+import fetch from 'node-fetch';
+import html2jsonLibrary from 'html2json';
+import cheerio from 'cheerio';
+import cheerioTableparser from 'cheerio-tableparser';
+import { driver, session } from '../neo4j/index.js';
 
+
+const html2json = html2jsonLibrary.html2json;
 
 async function asyncForEach(array, callback) {
   for (let index = 0; index < array.length; index++) {
@@ -74,7 +73,7 @@ const createCountry = async (countryName, nationalParksLink, continentName) => {
         `
           MATCH (a:Country),(b:Continent)
           WHERE a.name = "${countryName}" AND b.name = "${continentName}"
-          CREATE (a)-[r:locatedIn]->(b)
+          CREATE (a)-[r:partOf]->(b)
           RETURN type(r)
         `, {
           countryName,
@@ -391,6 +390,6 @@ const cleanUpImageName = async () => {
 
   // await getNationalParkMetaData();
   // await getMetaDataImages();
-  await cleanUpImageName();
+  // await cleanUpImageName();
   driver.close()
 })();
