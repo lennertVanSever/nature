@@ -4,9 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "npm run graphql",
+    "start": "npm run dataScraping:restCountries",
     "graphql": "nodemon --exec babel-node -- ./graphql/index.js",
-    "dataScraping": "babel-node -- ./dataScraping/wikipedia.js",
+    "dataScraping:wikipedia": "babel-node -- ./dataScraping/wikipedia.js",
+    "dataScraping:restCountries": "babel-node -- ./dataScraping/restCountries.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

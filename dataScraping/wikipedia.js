@@ -3,15 +3,10 @@ import html2jsonLibrary from 'html2json';
 import cheerio from 'cheerio';
 import cheerioTableparser from 'cheerio-tableparser';
 import { driver, session } from '../neo4j/index.js';
+import { asyncForEach } from '../utils/async';
 
 
 const html2json = html2jsonLibrary.html2json;
-
-async function asyncForEach(array, callback) {
-  for (let index = 0; index < array.length; index++) {
-    await callback(array[index], index, array);
-  }
-}
 
 const createContinents = async (callback) => {
   const response = await fetch('https://en.wikipedia.org/w/api.php?action=parse&page=List_of_national_parks&format=json&prop=sections');
